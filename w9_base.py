@@ -1,4 +1,4 @@
-from pybrain.datasets import ClassificationDataSet
+from pybrain.datasets import ClassificationDataSet, SupervisedDataSet
 from pybrain.utilities import percentError
 from pybrain.supervised.trainers import BackpropTrainer
 from pybrain.structure.modules import SoftmaxLayer
@@ -7,10 +7,12 @@ from pybrain.structure import FeedForwardNetwork, LinearLayer, SigmoidLayer, Ful
 from sklearn.datasets import load_digits
 from pybrain.tools.xml.networkwriter import NetworkWriter
 from pybrain.tools.xml.networkreader import NetworkReader
+from PIL import Image
 import os
 import matplotlib.pyplot as plt
 import cv2
-
+import numpy as np
+NUM_EPOCHS = 50
 
 # read image with cv2
 def loadImage(path):
@@ -30,78 +32,77 @@ def flatten(x):
 
 
 # pass image to store image a store it as t
-t = loadImage('8x8.png')
-# load the data and store
+
+
+#t = loadImage('8x8.png')
+
+#load the data and store
 digits = load_digits()
 
-# set y as target
+def normalizeImage():
+    image = Image.open("8x8.png")
+    image = image.convert('LA')
+    image.thumbnail((8,8),Image.ANTIALIAS)
+    image.save("numberOut.png")
+
+
+#set y as target
 X, y = digits.data, digits.target
 
-# add the contents digits to a dataset
-daSet = ClassificationDataSet(len(t), 1)
+
+#add the contents of digits to a dataset
+daSet = ClassificationDataSet(64, 1)
 for k in xrange(len(X)):
     daSet.addSample(X.ravel()[k], y.ravel()[k])
 
-# split the dataset into training and testing
-testData, trainData = daSet.splitWithProportion(0.25)
+#split the dataset into training and testing
+testData, trainData = daSet.splitWithProportion(0.40)
 
-# convert the data to binary
+#convert the data into 10 separate digits
 trainData._convertToOneOfMany()
 testData._convertToOneOfMany()
 
-# check for the save file and load
+
+#check for the save file and load
 if os.path.isfile('dig.xml'):
     net = NetworkReader.readFrom('dig.xml')
+    net.sorted = False
+    net.sortModules()
 else:
     # net = FeedForwardNetwork()
-    net = buildNetwork(trainData.indim, 64, trainData.outdim, outclass=SoftmaxLayer)
-
-################# this is from an old iteration will delete
-
-# create layers for FFN
-# inLayer = LinearLayer(len(t)) #sets up the number of nodes based on 'length' of the loaded image
-# hiddenLayer = SigmoidLayer(len(t))
-# outLayer = LinearLayer(10)#you need ten outputs - one for each digit(0,1,2,3 etc)
-
-# add layers to FFN
-# net.addInputModule(inLayer)
-# net.addModule(hiddenLayer)
-# net.addOutputModule(outLayer)
-
-# create connections between the layers
-# in_to_hidden = FullConnection(inLayer, hiddenLayer)
-# hidden_to_out = FullConnection(hiddenLayer, outLayer)
-# add connections
-# net.addConnection(in_to_hidden)
-# net.addConnection(hidden_to_out)
-
-# net.sortModules()
-
-
-
-# a test to show the digits in the dataset, try changing the 2 and it will blwo your mind
-plt.gray()
-plt.matshow(digits.images[1])
-plt.show()
+    net = buildNetwork(64, 37,10, hiddenclass=SigmoidLayer, outclass=SoftmaxLayer, bias=True)
 
 # create a backprop trainer
-trainer = BackpropTrainer(net, dataset=trainData, momentum=0.1, learningrate=0.01, verbose=True)
+trainer = BackpropTrainer(net, dataset=trainData, momentum=0.0, learningrate=0.01,weightdecay= 0.01, verbose=True)
 
-# set the epochs
-trainer.trainEpochs(50)
+trainer.trainUntilConvergence()
 
-# print results
-print 'Percent Accuracy Test dataset: ', percentError(trainer.testOnClassData(
-    dataset=testData)
-    , testData['class'])
+print(trainData.indim)
 
-trainer.train()
-#net.save()
+print(testData.indim)
 
-#def save(net):
-    #tree = ET.ElementTree(net)
-    #tree.write("dig.xml")
 
-    #filename = "dig.xml"
-    #net.image.save(filename)
+
+#a test to show the digits in the dataset, try changing the 2 and it will blwo your min
+"""plt.gray()
+plt.matshow(digits.images[2])
+plt.show()"""
+
+
+
+
+#set the epochs
+#trainer.trainEpochs(5)
 NetworkWriter.writeToFile(net, 'dig.xml')
+
+
+
+#print net.activate(t)
+
+
+#print results
+#print 'Percent Error dataset: ', percentError(trainer.testOnClassData(
+#    dataset=testData)
+#    , testData['class'])
+
+exit(0)
