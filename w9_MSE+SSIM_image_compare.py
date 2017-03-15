@@ -4,7 +4,9 @@ import matplotlib.pyplot as plt
 import cv2
 
 
-#Mean Squared Error algorithm finds the difference between two images
+#finds the difference between two images
+#Mean Squared Error algorithm -> estimates the perceived change
+#Structural Similarity Index algorithm -> models the perceived change
 #images are the same size
 def mse(imageA, imageB):
 
@@ -13,11 +15,15 @@ def mse(imageA, imageB):
 
     return err
 
-#comparison
 img1 = cv2.imread("8x8.png")
 img2 = cv2.imread("8x8v2.png")
+
+#grayscale
+img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+
 mseval = mse(img1, img2)
-ssimval = ssim(img1, img2,dynamic_range=255, gradient=True)
+ssimval = ssim(img1, img2)
 
 print(mseval)
 print (ssimval)
