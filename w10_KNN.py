@@ -7,6 +7,8 @@ from skimage import exposure
 import numpy as np
 import imutils
 import cv2
+import matplotlib.pyplot as plt
+import matplotlib.figure
 
 mnist = datasets.load_digits()
 
@@ -47,7 +49,7 @@ print(classification_report(test_labels, predictions))
 for i in np.random.randint(0, high=len(test_labels), size=(5,)):
     # grab the image and classify it
     image = test_data[i]
-    prediction = model.predict(image)[0]
+    prediction = model.predict(image.reshape(1,-1) )[0]
 
     # convert the image for a 64-dim array to an 8 x 8 image compatible with OpenCV,
     # then resize it to 32 x 32 pixels so we can see it better
@@ -56,6 +58,17 @@ for i in np.random.randint(0, high=len(test_labels), size=(5,)):
     image = imutils.resize(image, width=32, inter=cv2.INTER_CUBIC)
 
     # show the prediction
-    print("I think that digit is: {}".format(prediction))
+    print("Predicted digit is: {}".format(prediction))
     cv2.imshow("Image", image)
     cv2.waitKey(0)
+
+# Draw the figure.
+fig = plt.figure(1)
+plt.plot(k_vals, accuracies, 'ro', figure=fig)
+
+fig.suptitle("Nearest Neighbor Classifier Accuracies")
+fig.axes[0].set_xlabel("k (# of neighbors considered)")
+fig.axes[0].set_ylabel("accuracy (% correct)");
+fig.axes[0].axis([0, max(k_vals) + 1, 0, 1]);
+
+plt.show()
